@@ -80,7 +80,7 @@ dirs = listDirs(__dirname);
 
 server = http.createServer(function (req, res) {
   let url = req.url;
-
+  console.log(url);
   // Process axios itself
   if (/axios\.min\.js$/.test(url)) {
     pipeFileToResponse(res, '../dist/axios.min.js', 'text/javascript');

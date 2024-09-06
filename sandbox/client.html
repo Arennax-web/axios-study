@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>AXIOS | Sandbox</title>
-  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"/>
+  <!-- <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"/> -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css"/>
+  
   <style type="text/css">
     pre {
       min-height: 39px;
@@ -64,6 +66,8 @@
         <textarea id="headers" class="form-control" placeholder='{"X-Requested-With": "XMLHttpRequest"}'></textarea>
       </div>
       <button id="submit" type="submit" class="btn btn-primary">Send Request</button>
+      <button id="cancel-submit" type="submit" class="btn btn-primary">Cancel Send Request</button>
+      <button id="test" type="submit" class="btn btn-primary">test</button>
     </form>
   </div>
 
@@ -86,8 +90,9 @@
   </div>
 
   <script src="/axios.js"></script>
+
   <script>
-    (function () {
+    (function (axios2) {
       // Just for you IE8
       if (typeof Array.prototype.indexOf === 'undefined') {
         Array.prototype.indexOf = function (item) {
@@ -151,14 +156,16 @@
             break;
         }
       }
-
       submit.onclick = function () {
+        
+        var source = axios.CancelToken.source();
         var options = {
           url: getUrl(),
           params: !acceptsData(method.value) ? getParams() : undefined,
           data: acceptsData(method.value) ? getData() : undefined,
           method: method.value,
-          headers: getHeaders()
+          headers: getHeaders(),
+          cancelToken: source.token
         };
 
         request.innerHTML = JSON.stringify(options, null, 2);
@@ -169,10 +176,20 @@
             error.innerHTML = "None";
           })
           .catch(function (res) {
-            error.innerHTML = JSON.stringify(res.toJSON(), null, 2)
-            console.error('Axios caught an error from request', res.toJSON());
-            response.innerHTML = JSON.stringify(res.data, null, 2);
+            if (axios.isCancel(res)) {
+              console.log('Request canceled', res);
+            } else {
+              // 处理错误
+              error.innerHTML = JSON.stringify(res.toJSON(), null, 2)
+              console.error('Axios caught an error from request', res.toJSON());
+              response.innerHTML = JSON.stringify(res.data, null, 2);
+            }
           });
+          // 添加处理请求中断的操作
+          var CancelSubmit = document.getElementById('cancel-submit');
+          CancelSubmit.onclick = ()=> {
+            source.cancel('Operation canceled by the user.');
+          };
       };
 
       url.onchange = function () {
@@ -198,7 +215,24 @@
 
       syncWithLocalStorage();
       syncParamsAndData();
+      
     })();
   </script>
+
+<script  type="module" >
+  import axios2   from '/axios2.js';
+  var test = document.getElementById('test');
+    test.onclick = function () {
+      console.log(axios2);
+      axios2.open({
+        method:'get',
+        url:'/api'
+      })
+      axios2.send()
+      setTimeout(() => {
+        axios2.abort()
+      }, 500);
+    }
+</script>
 </body>
 </html>
